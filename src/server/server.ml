@@ -173,7 +173,7 @@ module Handlers(Ctxt : sig
       ~section:get_arch ~image:get_arch >>=? fun arch ->
     let lifter = lifter_of_arch arch in
     let target = Arch.(match backend, arch with
-        | "llvm", ARM -> Ok "arm"
+        | "llvm", ARM -> Ok "armv7"
         | "llvm", X86_32 -> Ok "i386"
         | "llvm", X86_64 -> Ok "x86_64"
         | backend, arch ->

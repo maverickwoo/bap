@@ -65,7 +65,7 @@ class ADT(object):
 
     def __repr__(self):
         def qstr(x):
-            if isinstance(x, int) or isinstance(x, ADT):
+            if isinstance(x, (int,long)) or isinstance(x, ADT):
                 return str(x)
             else:
                 return '"{0}"'.format(x)

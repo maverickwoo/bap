@@ -23,7 +23,7 @@ type value = [
 ] with sexp_of
 
 
-let minify = false
+let minify = true
 
 
 let sexp_of_response = Fn.compose Ezjsonm.to_sexp Ezjsonm.value

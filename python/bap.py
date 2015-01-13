@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os, time, atexit
+from signal import signal, SIGTERM
 import requests
 from subprocess import Popen
 from mmap import mmap
@@ -10,41 +11,45 @@ from tempfile import NamedTemporaryFile
 import json
 import adt, arm, asm, bil
 
+import threading
+
+from pprint import pprint
+
 
 __all__ = ["disasm", "image"]
 
 DEBUG_LEVEL = ["Critical", "Error"]
 
-instance = None
+
+storage = threading.local()
 
 def del_instance():
+    instance = getattr(storage, 'instance', None)
     if instance is not None:
         instance.close()
 
 def get_instance(**kwargs):
-    global instance
-    if 'server' in kwargs or instance is None:
-        if instance is not None:
-            instance.close()
+    instance = getattr(storage, 'instance', None)
+    if instance is None:
         args = kwargs.get('server', {})
-        instance = Bap(args)
-    return instance
+        storage.instance = Bap(args)
+    return storage.instance
 
 atexit.register(del_instance)
+signal(SIGTERM, lambda x,y: del_instance)
 
 def disasm(obj, **kwargs):
     r""" disasm(obj) disassembles provided object.
     Returns a generator object yield instructions.
-
     """
-    def ret(obj):
-        return get_instance(**kwargs).insns(obj)
+    def run(obj):
+        return get_instance(**kwargs).insns(obj, **kwargs)
     if isinstance(obj, Id):
-        return ret(obj)
+        return run(obj)
     elif isinstance(obj, Resource):
-        return ret(obj.ident)
+        return run(obj.ident)
     else:
-        return ret(load_chunk(obj, **kwargs))
+        return run(load_chunk(obj, **kwargs))
 
 def image(f, **kwargs):
     bap = get_instance(**kwargs)
@@ -218,17 +223,19 @@ class Bap(object):
             raise RuntimeError("Failed to connect to BAP server")
 
         self.data = {}
-        self.temp = NamedTemporaryFile('rw+b')
+        self.temp = NamedTemporaryFile('rw+b', prefix="bap-")
 
-    def insns(self, src):
-        res = self.call({'get_insns' : {'resource' : src}})
+    def insns(self, src, **kwargs):
+        req = {'resource' : src}
+        req.update(kwargs)
+        res = self.call({'get_insns' : req})
         for msg in res:
             if 'error' in msg:
                 err = Error(msg)
                 if err.severity in DEBUG_LEVEL:
                     print err
             else:
-                return (parse_insn(js) for js in msg['insns'])
+                return (x for x in [parse_insn(js) for js in msg['insns']])
 
     def close(self):
         self.__exit__()
@@ -270,8 +277,8 @@ class Bap(object):
     def mmap(self, data):
         url = "mmap://{0}?offset=0&length={1}".format(
             self.temp.name, len(data))
-        os.ftruncate(self.temp.fileno(), len(data))
-        mm = mmap(self.temp.fileno(), len(data))
+        os.ftruncate(self.temp.fileno(), 4096)
+        mm = mmap(self.temp.fileno(), 4096)
         mm.write(data)
         mm.close()
         return url
@@ -283,6 +290,7 @@ class Bap(object):
         return Id(rep['resource'])
 
 def spawn_server(**kwargs):
+    print "SPAWNING SERVER!!!!!!!!"
     port = kwargs.get('port', 8080)
     name = kwargs.get('name', 'bap-server')
     server = Popen([name, '--port=' + str(port)])
