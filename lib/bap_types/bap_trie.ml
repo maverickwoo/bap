@@ -37,8 +37,8 @@ module Make(Key : Key) = struct
     if len > 0 then loop 0 trie
     else trie.data <- f trie.data
 
-  let walk root k ~init ~f  =
-    let len = Key.length k in
+  let walk ?(max_length = Int.max_value) root k ~init ~f  =
+    let len = Int.min (Key.length k) max_length in
     let rec lookup best n trie =
       match Tokens.find trie.subs (Key.nth_token k n) with
       | None -> best
@@ -55,8 +55,8 @@ module Make(Key : Key) = struct
         ~f:(fun ~key:_ ~data:trie n -> n + count trie) in
     count trie
 
-  let longest_match root k =
-    walk root k ~init:(0,0,None) ~f:(fun (n,i,best) -> function
+  let longest_match ?max_length root k =
+    walk ?max_length root k ~init:(0,0,None) ~f:(fun (n,i,best) -> function
         | None -> (n+1,i,best)
         | better -> (n+1,n,better)) |> function
     | (_,i,Some thing) -> Some (i,thing)

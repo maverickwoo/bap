@@ -20,9 +20,10 @@ module type S = sig
   val add : 'a t -> key:key -> data:'a -> unit
   val change : 'a t -> key -> ('a option -> 'a option) -> unit
   val find : 'a t -> key -> 'a option
-  val walk : 'a t -> key -> init:'b -> f:('b -> 'a option -> 'b) -> 'b
+  val walk : ?max_length:int -> 'a t -> key -> init:'b ->
+    f:('b -> 'a option -> 'b) -> 'b
   val remove : 'a t -> key -> unit
-  val longest_match : 'a t -> key -> (int * 'a) option
+  val longest_match : ?max_length:int -> 'a t -> key -> (int * 'a) option
   val length : 'a t -> int
   val pp : (formatter -> 'a -> unit) -> formatter -> 'a t -> unit
 end

@@ -841,19 +841,22 @@ module Std : sig
     (** [find trie key] finds data associated with [key]  *)
     val find : 'a t -> key -> 'a option
 
-    (** [walk trie key ~init ~f] walks down the tree starting from the
-        root and ending with the last token of the key. Function [f]
-        is fold over values associated with all substrings of the key,
-        starting from a zero substring. *)
-    val walk : 'a t -> key -> init:'b -> f:('b -> 'a option -> 'b) -> 'b
+    (** [walk ?max_length trie key ~init ~f] walks down the tree starting from
+        the root and ending with the last token of the key or the key truncated
+        at [max_length] if specified. Function [f] is fold over values
+        associated with all substrings of the key, starting from a zero
+        substring. *)
+    val walk : ?max_length:int -> 'a t -> key -> init:'b ->
+      f:('b -> 'a option -> 'b) -> 'b
 
     (** [remove trie key] removes value bound with [key] if any.  *)
     val remove : 'a t -> key -> unit
 
-    (** [longest_match trie k] find the value associated with a
-        longest substring of a key [k]. Returns a pair - a length of
-        matched key and data, associated with that key. *)
-    val longest_match : 'a t -> key -> (int * 'a) option
+    (** [longest_match ?max_length trie k] find the value associated with a
+        longest substring of a key [k], with an optional limit of examining [k]
+        up to [max_length]. Returns a pair - a length of matched key and data,
+        associated with that key.*)
+    val longest_match : ?max_length:int -> 'a t -> key -> (int * 'a) option
 
     (** [length trie] returns the amount of entries in the [trie]  *)
     val length : 'a t -> int
