@@ -48,6 +48,17 @@ module Make(Key : Key) = struct
     let best = f init root.data in
     if len > 0 then lookup best 0 root else best
 
+  let walk_nc ?(max_length = Int.max_value) root k ~init ~(f: 'b -> 'a option -> int -> 'b)  =
+    let len = Int.min (Key.length k) max_length in
+    let rec lookup best n trie =
+      match Tokens.find trie.subs (Key.nth_token k n) with
+      | None -> best
+      | Some sub ->
+        let best = f best sub.data (Hashtbl.length sub.subs) in
+        if n + 1 = len then best else lookup best (n+1) sub in
+    let best = f init root.data (Hashtbl.length root.subs) in
+    if len > 0 then lookup best 0 root else best
+
   let length trie =
     let rec count trie =
       let n = if trie.data = None then 0 else 1 in

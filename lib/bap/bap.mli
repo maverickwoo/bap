@@ -849,6 +849,9 @@ module Std : sig
     val walk : ?max_length:int -> 'a t -> key -> init:'b ->
       f:('b -> 'a option -> 'b) -> 'b
 
+    val walk_nc : ?max_length:int -> 'a t -> key -> init:'b ->
+      f:('b -> 'a option -> int -> 'b) -> 'b
+
     (** [remove trie key] removes value bound with [key] if any.  *)
     val remove : 'a t -> key -> unit
 

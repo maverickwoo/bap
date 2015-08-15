@@ -22,6 +22,8 @@ module type S = sig
   val find : 'a t -> key -> 'a option
   val walk : ?max_length:int -> 'a t -> key -> init:'b ->
     f:('b -> 'a option -> 'b) -> 'b
+  val walk_nc : ?max_length:int -> 'a t -> key -> init:'b ->
+    f:('b -> 'a option -> int -> 'b) -> 'b
   val remove : 'a t -> key -> unit
   val longest_match : ?max_length:int -> 'a t -> key -> (int * 'a) option
   val length : 'a t -> int
